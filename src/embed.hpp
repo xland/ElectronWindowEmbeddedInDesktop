@@ -8,7 +8,6 @@ namespace
     HWND windowHwnd;
     HWND rawInputWindowHandle = nullptr;
     LPCSTR rawInputWindowClassName = "RawInputWindow";
-
     bool isDesktopActive()
     {
         HWND foreground = GetForegroundWindow();
@@ -177,9 +176,9 @@ void unEmbed(const Napi::CallbackInfo &info)
     SetParent(windowHandle, nullptr);
     if (windowHwnd)
     {
-        SetWindowLong(windowHandle, GWL_EXSTYLE, GetWindowLong(windowHandle, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+        SetWindowLong(windowHwnd, GWL_EXSTYLE, GetWindowLong(windowHwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
         stopForwardingRawInput();
         windowHwnd = nullptr;
     }
-    SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, nullptr, SPIF_SENDCHANGE);
+    // SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, nullptr, SPIF_SENDCHANGE);
 }
