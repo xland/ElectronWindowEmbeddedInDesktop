@@ -58,14 +58,13 @@
 <body>
     <div class="titleBar">
         <div style="flex: 1;"></div>
-        <div class="embedBtn btn">取消嵌入</div>
+        <div class="embedBtn btn">嵌入</div>
         <div class="closeBtn btn">关闭</div>
     </div>
     <div class="content"></div>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             let { ipcRenderer } = require("electron")
-            ipcRenderer.invoke('show')
             let closeBtn = document.querySelector(".closeBtn")
             closeBtn.addEventListener("click", () => {
                 ipcRenderer.invoke('close')
@@ -73,11 +72,11 @@
             let embedBtn = document.querySelector(".embedBtn")
             embedBtn.addEventListener("click", () => {
                 if (embedBtn.innerHTML == "取消嵌入") {
-                    ipcRenderer.invoke('detach')
                     embedBtn.innerHTML = "嵌入"
+                    ipcRenderer.invoke('detach')
                 } else {
-                    ipcRenderer.invoke("attach")
                     embedBtn.innerHTML = "取消嵌入"
+                    ipcRenderer.invoke("attach")
                 }
             })
         });

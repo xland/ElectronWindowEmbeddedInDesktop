@@ -7,7 +7,7 @@ namespace
 {
     HWND windowHwnd;
     HWND rawInputWindowHandle = nullptr;
-    LPCSTR rawInputWindowClassName = "RawInputWindow";
+    LPCSTR rawInputWindowClassName = "HikRawInputWindow";
     bool isDesktopActive()
     {
         HWND foreground = GetForegroundWindow();
@@ -174,11 +174,21 @@ void unEmbed(const Napi::CallbackInfo &info)
     auto buffer = info[0].As<Napi::Buffer<void *>>();
     HWND windowHandle = static_cast<HWND>(*reinterpret_cast<void **>(buffer.Data()));
     SetParent(windowHandle, nullptr);
-    if (windowHwnd)
-    {
-        SetWindowLong(windowHwnd, GWL_EXSTYLE, GetWindowLong(windowHwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
-        stopForwardingRawInput();
-        windowHwnd = nullptr;
-    }
-    // SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, nullptr, SPIF_SENDCHANGE);
+    SetWindowLong(windowHandle, GWL_EXSTYLE, GetWindowLong(windowHandle, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+    stopForwardingRawInput();
+    SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, nullptr, SPIF_UPDATEINIFILE);
+    windowHwnd = nullptr;
+}
+void refresh(const Napi::CallbackInfo &info)
+{
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    auto buffer = info[0].As<Napi::Buffer<void *>>();
+    HWND windowHandle = static_cast<HWND>(*reinterpret_cast<void **>(buffer.Data()));
+    HWND desktop = GetDesktopWindow();
+    SetForegroundWindow(desktop);
+    HWND shell = GetShellWindow();
+    SetForegroundWindow(shell);
+    HWND hwndDesktop = FindWindowA("Progman", "Program Manager");
+    SetForegroundWindow(hwndDesktop);
 }

@@ -5,16 +5,13 @@ let win;
 const createWindow = () => {
   win = new BrowserWindow({
     roundedCorners: false,
-    width: 675,
-    height: 680,
+    width: 600,
+    height: 800,
     enableLargerThanScreen: true,
     autoHideMenuBar: true,
-    show: false,
     frame: false,
     transparent: true,
-    skipTaskbar: true,
-    focusable: false,
-    type: "desktop",
+    show: true,
     webPreferences: {
       nodeIntegration: true,
       webSecurity: false,
@@ -31,22 +28,22 @@ const createWindow = () => {
   });
 };
 ipcMain.handle("show", () => {
-  console.log("allen");
-  native.embed(win.getNativeWindowHandle());
   win.show();
+  win.focus();
 });
 ipcMain.handle("close", () => {
   native.unEmbed(win.getNativeWindowHandle());
   win.close();
 });
 ipcMain.handle("detach", () => {
-  win.hide();
-  setTimeout(() => {
-    native.unEmbed(win.getNativeWindowHandle());
-  }, 600);
-  setTimeout(() => {
-    win.show();
-  }, 1200);
+  let oldWin = win;
+  oldWin.hide();
+  native.unEmbed(oldWin.getNativeWindowHandle());
+  createWindow();
+  win.show();
+  win.restore();
+  win.setAlwaysOnTop(true);
+  oldWin.close();
 });
 ipcMain.handle("attach", () => {
   native.embed(win.getNativeWindowHandle());
