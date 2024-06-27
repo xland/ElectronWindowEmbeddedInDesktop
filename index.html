@@ -60,14 +60,25 @@
         <div style="flex: 1;"></div>
         <div class="embedBtn btn">嵌入</div>
         <div class="closeBtn btn">关闭</div>
+        <div class="openBtn btn">打开</div>
     </div>
-    <div class="content"></div>
+    <div class="content">
+        <input type="text" id="textInput">
+    </div>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             let { ipcRenderer } = require("electron")
             let closeBtn = document.querySelector(".closeBtn")
             closeBtn.addEventListener("click", () => {
                 ipcRenderer.invoke('close')
+            })
+            let openBtn = document.querySelector(".openBtn")
+            openBtn.addEventListener("click", () => {
+                ipcRenderer.invoke('open')
+            })            
+            let textInput = document.querySelector("#textInput")
+            textInput.addEventListener("focus",()=>{
+                ipcRenderer.invoke('focus')
             })
             let embedBtn = document.querySelector(".embedBtn")
             embedBtn.addEventListener("click", () => {
@@ -79,6 +90,7 @@
                     ipcRenderer.invoke("attach")
                 }
             })
+
         });
     </script>
 </body>

@@ -2,15 +2,26 @@
 #include <napi.h>
 #include <windows.h>
 #include <hidusage.h>
+#include <sstream>
 
 namespace
 {
     HWND windowHwnd;
     HWND rawInputWindowHandle = nullptr;
     LPCSTR rawInputWindowClassName = "HikRawInputWindow";
+
     bool isDesktopActive()
     {
-        HWND foreground = GetForegroundWindow();
+        POINT mouse_position;
+        GetCursorPos(&mouse_position);
+        HWND foreground = WindowFromPoint(mouse_position);
+        // std::stringstream ss;
+        // ss << foreground;
+        // auto str = ss.str();
+        // OutputDebugStringA(str.data());
+        // OutputDebugStringA("\r\n");
+        HWND tempHwnd{0};
+        // HWND foreground = GetForegroundWindow();
         HWND desktop = GetDesktopWindow();
         HWND shell = GetShellWindow();
         HWND desktopWorkerW = FindWindowEx(nullptr, nullptr, "WorkerW", nullptr);
@@ -19,13 +30,16 @@ namespace
             HWND shellDllDefView = FindWindowEx(desktopWorkerW, nullptr, "SHELLDLL_DefView", nullptr);
             if (shellDllDefView != nullptr)
             {
+                tempHwnd = FindWindowEx(shellDllDefView, nullptr, "SysListView32", nullptr);
                 break;
             }
             desktopWorkerW = FindWindowEx(nullptr, desktopWorkerW, "WorkerW", nullptr);
         }
+
         HWND wallpaperWorkerW = FindWindowEx(nullptr, desktopWorkerW, "WorkerW", nullptr);
         bool isForeground = (foreground == desktop ||
                              foreground == shell ||
+                             foreground == tempHwnd ||
                              foreground == desktopWorkerW ||
                              foreground == wallpaperWorkerW);
         return isForeground;
@@ -92,6 +106,23 @@ namespace
                 }
                 break;
             }
+            case RIM_TYPEKEYBOARD:
+            {
+                auto message = raw->data.keyboard.Message;
+                auto vKey = raw->data.keyboard.VKey;
+                auto makeCode = raw->data.keyboard.MakeCode;
+                auto flags = raw->data.keyboard.Flags;
+                std::uint32_t lParam = 1u;
+                lParam |= static_cast<std::uint32_t>(makeCode) << 16;
+                lParam |= 1u << 24;
+                lParam |= 0u << 29;
+                if (!(flags & RI_KEY_BREAK)) {
+                    lParam |= 1u << 30;
+                    lParam |= 1u << 31;
+                }
+                PostMessageA(windowHwnd, message, vKey, lParam);
+                break;
+            }
             }
         }
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -117,12 +148,18 @@ namespace
         {
             Napi::TypeError::New(env, "Could not create raw input window").ThrowAsJavaScriptException();
         }
-        RAWINPUTDEVICE rid = {0};
-        rid.usUsagePage = HID_USAGE_PAGE_GENERIC;
-        rid.usUsage = HID_USAGE_GENERIC_MOUSE;
-        rid.dwFlags = RIDEV_INPUTSINK;
-        rid.hwndTarget = rawInputWindowHandle;
-        if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == FALSE)
+        RAWINPUTDEVICE rids[2];
+        rids[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+        rids[0].usUsage = HID_USAGE_GENERIC_MOUSE;
+        rids[0].dwFlags = RIDEV_INPUTSINK;
+        rids[0].hwndTarget = rawInputWindowHandle;
+
+        rids[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
+        rids[1].usUsage = HID_USAGE_GENERIC_KEYBOARD;
+        rids[1].dwFlags = RIDEV_EXINPUTSINK;
+        rids[1].hwndTarget = rawInputWindowHandle;
+
+        if (RegisterRawInputDevices(rids, 2, sizeof(rids[0])) == FALSE)
         {
             Napi::TypeError::New(env, "Could not register raw input devices").ThrowAsJavaScriptException();
         }
