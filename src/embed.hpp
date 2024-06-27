@@ -9,7 +9,8 @@ namespace
     HWND windowHwnd;
     HWND rawInputWindowHandle = nullptr;
     LPCSTR rawInputWindowClassName = "HikRawInputWindow";
-
+    //https://github.com/JacquesLucke/blender/blob/master/intern/ghost/intern/GHOST_SystemWin32.cpp#L1298
+    //这个页面去搜IME
     bool isDesktopActive()
     {
         POINT mouse_position;
